@@ -43,6 +43,9 @@ bc_clang_cc1_cflags += -target-feature +long64
 endif
 bc_translated_clang_cc1_cflags := $(addprefix -Xclang , $(bc_clang_cc1_cflags))
 
+# Disable deprecated warnings, because we have to support even legacy APIs.
+bc_warning_flags := -Wno-deprecated -Werror
+
 bc_cflags := -MD \
              $(RS_VERSION_DEFINE) \
              -std=c99 \
@@ -53,6 +56,7 @@ bc_cflags := -MD \
              -target $(BCC_RS_TRIPLE) \
              -fsigned-char \
              $($(LOCAL_2ND_ARCH_VAR_PREFIX)RS_TRIPLE_CFLAGS) \
+	     $(bc_warning_flags) \
              $(LOCAL_CFLAGS) \
              $(bc_translated_clang_cc1_cflags) \
              $(LOCAL_CFLAGS_$(my_32_64_bit_suffix))
@@ -87,10 +91,8 @@ $(c_bc_files): $(intermediates)/%.bc: $(LOCAL_PATH)/%.c $(bc_clang)
 $(ll_bc_files): $(intermediates)/%.bc: $(LOCAL_PATH)/%.ll $(LLVM_AS2)
 	@mkdir -p $(dir $@)
 	$(hide) $(LLVM_AS2) $< -o $@
-	$(call transform-d-to-p-args,$(@:%.bc=%.d),$(@:%.bc=%.P))
 
 -include $(c_bc_files:%.bc=%.P)
--include $(ll_bc_files:%.bc=%.P)
 
 $(LOCAL_BUILT_MODULE): PRIVATE_BC_FILES := $(c_bc_files) $(ll_bc_files)
 $(LOCAL_BUILT_MODULE): $(c_bc_files) $(ll_bc_files)
