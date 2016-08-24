@@ -18,6 +18,9 @@ ifndef BCC_RS_TRIPLE
 BCC_RS_TRIPLE := $($(LOCAL_2ND_ARCH_VAR_PREFIX)RS_TRIPLE)
 endif
 
+LLVM_AS2 := $(LLVM_PREBUILTS_PATH)/llvm-as$(BUILD_EXECUTABLE_SUFFIX)
+LLVM_LINK2 := $(LLVM_PREBUILTS_PATH)/llvm-link$(BUILD_EXECUTABLE_SUFFIX)
+
 # Set these values always by default
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
@@ -81,9 +84,9 @@ $(c_bc_files): $(intermediates)/%.bc: $(LOCAL_PATH)/%.c $(bc_clang)
 	$(hide) $(bc_clang) $(addprefix -I, $(PRIVATE_INCLUDES)) $(PRIVATE_CFLAGS) $< -o $@
 	$(call transform-d-to-p-args,$(@:%.bc=%.d),$(@:%.bc=%.P))
 
-$(ll_bc_files): $(intermediates)/%.bc: $(LOCAL_PATH)/%.ll $(LLVM_AS)
+$(ll_bc_files): $(intermediates)/%.bc: $(LOCAL_PATH)/%.ll $(LLVM_AS2)
 	@mkdir -p $(dir $@)
-	$(hide) $(LLVM_AS) $< -o $@
+	$(hide) $(LLVM_AS2) $< -o $@
 	$(call transform-d-to-p-args,$(@:%.bc=%.d),$(@:%.bc=%.P))
 
 -include $(c_bc_files:%.bc=%.P)
@@ -91,11 +94,11 @@ $(ll_bc_files): $(intermediates)/%.bc: $(LOCAL_PATH)/%.ll $(LLVM_AS)
 
 $(LOCAL_BUILT_MODULE): PRIVATE_BC_FILES := $(c_bc_files) $(ll_bc_files)
 $(LOCAL_BUILT_MODULE): $(c_bc_files) $(ll_bc_files)
-$(LOCAL_BUILT_MODULE): $(LLVM_LINK) $(clcore_LLVM_LD)
-$(LOCAL_BUILT_MODULE): $(LLVM_AS) $(BCC_STRIP_ATTR)
+$(LOCAL_BUILT_MODULE): $(LLVM_LINK2) $(clcore_LLVM_LD)
+$(LOCAL_BUILT_MODULE): $(LLVM_AS2) $(BCC_STRIP_ATTR)
 	@echo "bc lib: $(PRIVATE_MODULE) ($@)"
 	@mkdir -p $(dir $@)
-	$(hide) $(LLVM_LINK) $(PRIVATE_BC_FILES) -o $@.unstripped
+	$(hide) $(LLVM_LINK2) $(PRIVATE_BC_FILES) -o $@.unstripped
 	$(hide) $(BCC_STRIP_ATTR) -o $@ $@.unstripped
 
 BCC_RS_TRIPLE :=
